@@ -1,0 +1,27 @@
+# Build artifacts
+build/
+CMakeFiles/
+cmake_install.cmake
+CMakeCache.txt
+*.o
+*.a
+*.so
+*.exe
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Output files
+*.xlsx
+*.xls
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies
+.conan/
