@@ -1,0 +1,200 @@
+{
+  "categories": [
+    {
+      "category": "Groceries",
+      "keywords": [
+        "grocery",
+        "safeway",
+        "trader",
+        "whole foods",
+        "kroger",
+        "publix",
+        "walmart grocery",
+        "costco",
+        "market",
+        "supermarket",
+        "sprouts",
+        "instacart"
+      ]
+    },
+    {
+      "category": "Gas",
+      "keywords": [
+        "gas",
+        "fuel",
+        "shell",
+        "chevron",
+        "bp",
+        "exxon",
+        "mobil",
+        "texaco",
+        "sunoco",
+        "speedway",
+        "circle k",
+        "pilot",
+        "loves"
+      ]
+    },
+    {
+      "category": "Dining",
+      "keywords": [
+        "restaurant",
+        "cafe",
+        "pizza",
+        "burger",
+        "diner",
+        "bar",
+        "coffee",
+        "starbucks",
+        "chipotle",
+        "taco bell",
+        "mcdonalds",
+        "wendy's",
+        "chick-fil-a",
+        "olive garden",
+        "applebee's",
+        "cheesecake factory",
+        "panera",
+        "subway",
+        "jimmy john's",
+        "five guys",
+        "in-n-out",
+        "kfc",
+        "popeyes",
+        "sonic",
+        "whataburger",
+        "food delivery",
+        "doordash",
+        "uber eats",
+        "grubhub"
+      ]
+    },
+    {
+      "category": "Shopping",
+      "keywords": [
+        "amazon",
+        "ebay",
+        "walmart",
+        "target",
+        "mall",
+        "store",
+        "retail",
+        "boutique",
+        "department store",
+        "sam's club",
+        "best buy",
+        "home depot",
+        "lowes",
+        "ikea",
+        "gap",
+        "h&m",
+        "zara",
+        "old navy",
+        "tj maxx",
+        "ross",
+        "marshalls"
+      ]
+    },
+    {
+      "category": "Entertainment",
+      "keywords": [
+        "netflix",
+        "spotify",
+        "hulu",
+        "disney",
+        "movie",
+        "theater",
+        "cinema",
+        "concert",
+        "ticket",
+        "amusement",
+        "apple music",
+        "xbox",
+        "playstation",
+        "steam",
+        "gaming",
+        "theme park"
+      ]
+    },
+    {
+      "category": "Utilities",
+      "keywords": [
+        "electricity",
+        "water",
+        "gas bill",
+        "internet",
+        "cable",
+        "phone bill",
+        "electric",
+        "power",
+        "utility",
+        "comcast",
+        "verizon",
+        "at&t",
+        "sprint",
+        "t-mobile"
+      ]
+    },
+    {
+      "category": "Healthcare",
+      "keywords": [
+        "doctor",
+        "hospital",
+        "pharmacy",
+        "dental",
+        "health",
+        "medical",
+        "clinic",
+        "cvs",
+        "walgreens",
+        "rite aid",
+        "urgent care",
+        "lab",
+        "therapy",
+        "optometry"
+      ]
+    },
+    {
+      "category": "Transportation",
+      "keywords": [
+        "uber",
+        "lyft",
+        "taxi",
+        "parking",
+        "toll",
+        "transit",
+        "bus",
+        "train",
+        "metro",
+        "parking garage",
+        "car rental",
+        "hertz",
+        "enterprise",
+        "avis"
+      ]
+    },
+    {
+      "category": "Subscriptions",
+      "keywords": [
+        "subscription",
+        "membership",
+        "prime",
+        "membership fee",
+        "annual fee",
+        "monthly fee"
+      ]
+    },
+    {
+      "category": "Transfers",
+      "keywords": [
+        "transfer",
+        "deposit",
+        "xfer",
+        "move funds",
+        "wire",
+        "ach",
+        "p2p"
+      ]
+    }
+  ]
+}

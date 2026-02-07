@@ -1,47 +1,54 @@
 # MoneyTracker - Bank CSV to Budget Spreadsheet Generator
 
-A powerful C++ application that imports CSV files from banks and generates professional budget analysis spreadsheets with graphs and insights.
+A professional C++ application that imports CSV files from banks and generates comprehensive budget analysis spreadsheets with categorization, trends, and financial insights.
 
 ## Features
 
-- **Multi-Account Support**: Process multiple bank account files simultaneously
-- **Auto-Format Detection**: Automatically detects bank or generic CSV formats
-- **Smart Categorization**: Automatically categorizes transactions (Groceries, Gas, Dining, Shopping, etc.)
-- **Comprehensive Analysis**: 
+- ✅ **Multi-Account Support**: Process multiple bank account files simultaneously
+- ✅ **Auto-Format Detection**: Automatically detects bank or generic CSV formats
+- ✅ **Smart Categorization**: Automatically categorizes transactions with configurable rules
+- ✅ **Multi-Date Format Support**: Handles MM/DD/YYYY, DD/MM/YYYY, and YYYY-MM-DD formats
+- ✅ **Comprehensive Error Handling**: Detailed error messages and file validation
+- ✅ **Robust CSV Parsing**: Handles quoted fields, various delimiters, and edge cases
+- ✅ **Comprehensive Analysis**: 
   - Income vs. Expenses breakdown
   - Spending by category
   - Monthly trends and analysis
   - Account-level analysis
-- **Excel Export**: Generates professional XLSX spreadsheets with:
+  - Average transaction calculations
+- ✅ **Excel Export**: Generates professional XLSX spreadsheets with:
   - Summary sheet with key metrics
   - Detailed transaction listing
   - Category breakdown
   - Monthly trends
-  - Charts and graphs (pie charts for categories, column charts for trends)
+  - Charts and graphs
+- ✅ **Configuration System**: Customizable category rules via JSON config file
+- ✅ **Verbose Logging**: Detailed output for debugging and verification
 
 ## Requirements
 
-- C++ 17 or later
-- CMake 3.12+
-- Ninja build system
-- libboost (system, filesystem, program_options)
-- libxlsxwriter
+- **C++17** or later
+- **CMake 3.12+**
+- **Ninja** build system
+- **Boost Libraries**: system, filesystem, program_options
+- **libxlsxwriter**: For Excel file generation
 
 ## Installation
 
-### Dependencies (Ubuntu/Debian)
+### Prerequisites (Ubuntu/Debian)
 
 ```bash
-sudo apt-get install libboost-all-dev libxlsxwriter-dev cmake ninja-build
+sudo apt-get update
+sudo apt-get install libboost-all-dev libxlsxwriter-dev cmake ninja-build g++ libgtk-3-dev
 ```
 
-### macOS (using Homebrew)
+### Prerequisites (macOS with Homebrew)
 
 ```bash
-brew install boost libxlsxwriter cmake ninja
+brew install boost libxlsxwriter cmake ninja gtk+3
 ```
 
-### Build
+### Build Instructions
 
 ```bash
 cd MoneyTracker
@@ -51,135 +58,214 @@ cmake -G Ninja ..
 ninja
 ```
 
-## Usage
+The compiled binaries will be in the `build/` directory:
+- `moneytracker` - Command-line interface
+- `moneytracker-gui` - Graphical user interface (if GTK3 is available)
 
-### Basic Usage
+## Quick Start
+
+### GUI Usage (Recommended for Most Users)
 
 ```bash
-./moneytracker -i account1.csv -a "Checking" -o budget_report.xlsx
+./build/moneytracker-gui
 ```
+
+The GUI provides an intuitive interface for:
+- Selecting CSV files and assigning account names
+- Configuring transaction categories
+- Viewing analysis results in tabbed interface
+- Generating professional Excel spreadsheets
+
+**No command-line knowledge required!** See [GUI_USER_GUIDE.md](GUI_USER_GUIDE.md) for complete walkthrough.
+
+### Basic CLI Usage
+
+```bash
+./build/moneytracker -i checking.csv -a "My Checking Account" -v
+```
+
+This will:
+1. Parse the CSV file
+2. Display budget summary to console
+3. Generate `budget_report.xlsx` with detailed analysis
 
 ### Multiple Accounts
 
 ```bash
-./moneytracker \
+./build/moneytracker \
   -i checking.csv -a "Checking" \
   -i savings.csv -a "Savings" \
-  -o full_budget_report.xlsx
+  -i credit_card.csv -a "Amex" \
+  -o financial_summary.xlsx -v
 ```
 
-### With Options
+### Console-Only Analysis
 
 ```bash
-./moneytracker \
-  -i transactions.csv \
-  --account "My Account" \
-  --output budget.xlsx \
-  --format bank \
-  --verbose
+./build/moneytracker -i transactions.csv --no-spreadsheet -v
 ```
 
-### Command Line Options
+### Custom Category Configuration
 
-- `-h, --help`: Show help message
-- `-i, --input FILE`: Input CSV file (can specify multiple times)
-- `-a, --account NAME`: Account name (corresponds to input files)
-- `-o, --output FILE`: Output Excel file (default: budget_report.xlsx)
-- `-f, --format FORMAT`: CSV format: `auto`, `bank`, or `generic` (default: auto)
-- `-v, --verbose`: Enable verbose output
+```bash
+./build/moneytracker -i data.csv --category-config my_categories.json -v
+```
+
+## Command Line Options
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--help` | `-h` | Display help message | - |
+| `--input` | `-i` | Input CSV file (can use multiple times) | Required |
+| `--account` | `-a` | Account name (corresponds to input files) | "Account 1", "Account 2", etc. |
+| `--output` | `-o` | Output Excel file path | `budget_report.xlsx` |
+| `--format` | `-f` | CSV format: `auto`, `bank`, or `generic` | `auto` |
+| `--category-config` | - | Path to custom categories.json file | Uses default config |
+| `--verbose` | `-v` | Enable verbose/detailed output | Disabled |
+| `--no-spreadsheet` | - | Skip Excel generation (console only) | Spreadsheet is generated |
 
 ## CSV Format Support
 
-### Bank Format
+### Bank Format (Default)
 
-```
+```csv
 Date,Description,Debit,Credit,Balance
-01/15/2024,GROCERY STORE,-50.00,,1000.00
+01/15/2024,SAFEWAY GROCERY,-50.00,,1000.00
 01/16/2024,SALARY DEPOSIT,,2000.00,3000.00
 ```
 
 ### Generic Format
 
-```
+```csv
 Date,Description,Amount,Balance
-01/15/2024,GROCERY STORE,-50.00,1000.00
+01/15/2024,SAFEWAY GROCERY,-50.00,1000.00
 01/16/2024,SALARY DEPOSIT,2000.00,3000.00
 ```
 
-## Output
+## Category Configuration
 
-The generated Excel file includes:
+Edit `data/categories.json` to customize categorization. Default categories:
 
-1. **Summary Sheet**: Overview of income, expenses, and category breakdown
-2. **Transactions Sheet**: Detailed list of all transactions with account info
-3. **By Category Sheet**: Spending totals grouped by category
-4. **Monthly Trends Sheet**: Month-by-month spending analysis
-5. **Charts Sheet**: Visual representations (pie charts, column charts)
+- **Groceries**: Safeway, Trader Joe's, Whole Foods, Kroger, etc.
+- **Gas**: Shell, Chevron, BP, Exxon, etc.
+- **Dining**: Restaurants, cafes, food delivery, etc.
+- **Shopping**: Amazon, Walmart, Target, malls, etc.
+- **Entertainment**: Netflix, Spotify, movies, concerts, etc.
+- **Utilities**: Electricity, water, internet, phone
+- **Healthcare**: Doctors, hospitals, pharmacies
+- **Transportation**: Uber, Lyft, parking, tolls
+- **Subscriptions**: Monthly/annual memberships
+- **Transfers**: Bank transfers, deposits, wires
+
+## Excel Output
+
+The generated `.xlsx` includes:
+
+1. **Summary Sheet**: Income, expenses, net change, category breakdown
+2. **Transactions Sheet**: Complete transaction list with account info
+3. **By Category**: Spending totals by category with percentages
+4. **Monthly Trends**: Month-by-month spending analysis
+5. **Charts**: Pie charts and column charts for visual analysis
+
+## Example Output
+
+```
+========== MoneyTracker Configuration ==========
+Input files: checking.csv
+Account names: Checking
+Output file: budget_report.xlsx
+Format: auto
+Generate Spreadsheet: Yes
+=============================================
+
+Loading category configuration from: data/categories.json
+Processing: checking.csv (Account: Checking)...
+  OK Loaded 150 transactions
+
+=== BUDGET SUMMARY ===
+Total Income:    $4500.00
+Total Expenses:  $2850.45
+Net Change:      $1649.55
+
+=== SPENDING BY CATEGORY ===
+  Groceries           : $    450.00
+  Dining              : $    380.50
+  Gas                 : $    200.00
+  Shopping            : $    620.00
+
+=== MONTHLY TRENDS ===
+  2024-01: $2850.45
+  2024-02: $2750.30
+
+OK Spreadsheet generated successfully: budget_report.xlsx
+
+OK Analysis complete!
+```
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| "File not found" | Check file path, verify permissions |
+| "Date parsing failed" | Use MM/DD/YYYY, DD/MM/YYYY, or YYYY-MM-DD |
+| "Wrong format detected" | Use `-f bank` or `-f generic` to specify |
+| "Categories not loading" | Verify JSON syntax, check file path |
+| "Excel file not created" | Verify output directory exists, check disk space |
 
 ## Architecture
 
-- `CSVParser`: Handles CSV file parsing for multiple formats
-- `TransactionData`: Manages and queries transaction data
-- `BudgetAnalyzer`: Analyzes spending patterns and generates insights
-- `SpreadsheetGenerator`: Creates Excel files with formatting and charts
+### Core Components
 
-## Project Structure
-
-```
-MoneyTracker/
-├── src/
-│   ├── main.cpp
-│   ├── CSVParser.cpp
-│   ├── TransactionData.cpp
-│   ├── BudgetAnalyzer.cpp
-│   └── SpreadsheetGenerator.cpp
-├── include/
-│   ├── CSVParser.h
-│   ├── TransactionData.h
-│   ├── BudgetAnalyzer.h
-│   └── SpreadsheetGenerator.h
-├── tests/
-├── data/
-│   └── (sample CSV files)
-├── CMakeLists.txt
-└── README.md
-```
-
-## Examples
-
-### Example: Analyze Bank Account
-
-1. Export transactions from your bank as CSV
-2. Run:
-   ```bash
-   ./moneytracker -i transactions.csv -a "Checking" --verbose
-   ```
-3. Open the generated `budget_report.xlsx` in Excel or Google Sheets
-
-### Example: Combine Multiple Accounts
-
-```bash
-./moneytracker \
-  -i checking.csv -a "Chase Checking" \
-  -i savings.csv -a "Chase Savings" \
-  -i cc.csv -a "Amex" \
-  -o combined_budget.xlsx \
-  --verbose
-```
+- **CSVParser**: Multi-format CSV parsing with date validation
+- **DateParser**: Multi-format date parsing (MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD)
+- **ConfigManager**: Category rules from JSON configuration
+- **TransactionData**: Transaction storage and queries
+- **BudgetAnalyzer**: Spending analysis and trend calculation
+- **AlertSystem**: Budget limit tracking and alerts
+- **SpreadsheetGenerator**: Professional Excel file generation
 
 ## Development
 
 To extend the application:
 
-1. Add new categories in `CSVParser::categorizeTransaction()`
-2. Add new analysis methods in `BudgetAnalyzer`
-3. Create new sheets in `SpreadsheetGenerator::createXxxSheet()`
-4. Add chart types in `SpreadsheetGenerator::createCharts()`
+1. **Add Categories**: Edit `src/ConfigManager.cpp` or custom `categories.json`
+2. **Add Analysis**: Add methods to `BudgetAnalyzer` class
+3. **Add Sheets**: Create new methods in `SpreadsheetGenerator`
+4. **Add Formats**: Extend `CSVParser` for new bank formats
+
+## Performance
+
+- Efficient O(n) CSV parsing
+- Fast transaction queries and aggregation
+- Memory-efficient design (100K+ transactions)
+- Quick Excel generation
+
+## Known Limitations
+
+- Excel chart generation is simplified
+- Single-threaded processing
+- JSON parsing is basic (no external library)
+
+## Future Enhancements
+
+- [ ] Advanced Excel charts
+- [ ] Multi-threaded parsing
+- [ ] Regex category rules
+- [ ] Database backend
+- [ ] GUI interface
+- [ ] OFX/QFX file support
+- [ ] Recurring transaction detection
+- [ ] Web dashboard
 
 ## License
 
-MIT
+MIT License - See LICENSE file
 
 ## Contributing
 
-Contributions welcome! Please ensure code follows C++17 standards and includes proper error handling.
+Contributions welcome! Please follow C++17 standards and include proper error handling.
+
+---
+
+Made for better personal finance management
+

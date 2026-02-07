@@ -46,6 +46,7 @@ public:
     
     double getSpendingTrend() const;  // Returns percentage change trend
     double getAverageMonthlySpending() const;
+    double getAverageTransaction() const;
     
 private:
     const TransactionData& transactionData;

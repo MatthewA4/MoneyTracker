@@ -109,3 +109,16 @@ double BudgetAnalyzer::getAverageMonthlySpending() const {
     
     return total / monthlyTrends.size();
 }
+
+double BudgetAnalyzer::getAverageTransaction() const {
+    const auto& transactions = transactionData.getAllTransactions();
+    
+    if (transactions.empty()) return 0.0;
+    
+    double total = 0.0;
+    for (const auto& t : transactions) {
+        total += std::abs(t.amount);
+    }
+    
+    return total / transactions.size();
+}

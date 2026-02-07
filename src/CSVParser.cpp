@@ -18,13 +18,19 @@
 //CSVParser.cpp
 
 #include "CSVParser.h"
+#include "DateParser.h"
 #include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <cctype>
 #include <iomanip>
 
-CSVParser::CSVParser() {}
+CSVParser::CSVParser(std::shared_ptr<ConfigManager> configManager) 
+    : config(configManager) {
+    if (!config) {
+        config = std::make_shared<ConfigManager>();
+    }
+}
 
 std::vector<std::string> CSVParser::splitLine(const std::string& line, char delimiter) {
     std::vector<std::string> result;
@@ -70,33 +76,8 @@ double CSVParser::parseAmount(const std::string& amount) {
 }
 
 std::string CSVParser::categorizeTransaction(const std::string& description) {
-    std::string desc = description;
-    std::transform(desc.begin(), desc.end(), desc.begin(), ::tolower);
-    
-    // Simple categorization logic
-    if (desc.find("grocery") != std::string::npos || desc.find("safeway") != std::string::npos ||
-        desc.find("trader") != std::string::npos || desc.find("whole foods") != std::string::npos) {
-        return "Groceries";
-    }
-    if (desc.find("gas") != std::string::npos || desc.find("fuel") != std::string::npos ||
-        desc.find("shell") != std::string::npos || desc.find("chevron") != std::string::npos) {
-        return "Gas";
-    }
-    if (desc.find("restaurant") != std::string::npos || desc.find("cafe") != std::string::npos ||
-        desc.find("pizza") != std::string::npos || desc.find("burger") != std::string::npos) {
-        return "Dining";
-    }
-    if (desc.find("amazon") != std::string::npos || desc.find("ebay") != std::string::npos ||
-        desc.find("walmart") != std::string::npos || desc.find("target") != std::string::npos) {
-        return "Shopping";
-    }
-    if (desc.find("netflix") != std::string::npos || desc.find("spotify") != std::string::npos ||
-        desc.find("hulu") != std::string::npos || desc.find("subscription") != std::string::npos) {
-        return "Subscriptions";
-    }
-    if (desc.find("deposit") != std::string::npos || desc.find("transfer") != std::string::npos ||
-        desc.find("xfer") != std::string::npos) {
-        return "Transfers";
+    if (config) {
+        return config->categorizeTransaction(description);
     }
     
     return "Other";
@@ -112,6 +93,7 @@ std::vector<Transaction> CSVParser::parseBank(const std::string& filePath, const
     
     std::string line;
     int lineNumber = 0;
+    int parseErrors = 0;
     
     // Skip header lines
     while (std::getline(file, line) && lineNumber < 2) {
@@ -121,27 +103,49 @@ std::vector<Transaction> CSVParser::parseBank(const std::string& filePath, const
     // Bank format: Date,Description,Debit,Credit,Balance
     while (std::getline(file, line)) {
         if (line.empty()) continue;
+        lineNumber++;
         
-        auto parts = splitLine(line);
-        if (parts.size() < 5) continue;
-        
-        Transaction transaction;
-        transaction.date = parts[0];
-        transaction.description = parts[1];
-        
-        // Parse debit/credit
-        double debit = parseAmount(parts[2]);
-        double credit = parseAmount(parts[3]);
-        transaction.amount = (debit > 0) ? -debit : credit;
-        
-        transaction.balance = parseAmount(parts[4]);
-        transaction.category = categorizeTransaction(transaction.description);
-        transaction.accountName = accountName;
-        
-        transactions.push_back(transaction);
+        try {
+            auto parts = splitLine(line);
+            if (parts.size() < 5) {
+                parseErrors++;
+                continue;
+            }
+            
+            Transaction transaction;
+            
+            // Parse and validate date
+            try {
+                transaction.date = DateParser::parse(parts[0]);
+            } catch (const std::exception& e) {
+                parseErrors++;
+                continue;  // Skip transaction with invalid date
+            }
+            
+            transaction.description = parts[1];
+            
+            // Parse debit/credit
+            double debit = parseAmount(parts[2]);
+            double credit = parseAmount(parts[3]);
+            transaction.amount = (debit > 0) ? -debit : credit;
+            
+            transaction.balance = parseAmount(parts[4]);
+            transaction.category = categorizeTransaction(transaction.description);
+            transaction.accountName = accountName;
+            
+            transactions.push_back(transaction);
+        } catch (const std::exception& e) {
+            parseErrors++;
+            // Continue parsing remaining lines
+        }
     }
     
     file.close();
+    
+    if (parseErrors > 0) {
+        throw std::runtime_error(std::to_string(parseErrors) + " lines failed to parse in " + filePath);
+    }
+    
     return transactions;
 }
 
@@ -155,6 +159,7 @@ std::vector<Transaction> CSVParser::parseGeneric(const std::string& filePath, co
     
     std::string line;
     int lineNumber = 0;
+    int parseErrors = 0;
     
     while (std::getline(file, line)) {
         if (line.empty()) continue;
@@ -167,51 +172,69 @@ std::vector<Transaction> CSVParser::parseGeneric(const std::string& filePath, co
             continue;
         }
         
-        auto parts = splitLine(line);
-        if (parts.size() < 2) continue;  // Need at least date and amount
-        
-        Transaction transaction;
-        
-        // Try to parse date (first column)
-        transaction.date = parts[0];
-        
-        // Look for amount - usually in 2nd or 3rd column
-        // For various formats: Date, Amount, Description OR Date, Description, Amount
-        double amount = 0.0;
-        std::string description;
-        
-        if (parts.size() >= 3) {
-            // Try column 2 as amount first
-            amount = parseAmount(parts[1]);
-            if (amount != 0.0 || parts[1].find_first_of("-0123456789.$") != std::string::npos) {
-                // Column 2 is amount
-                description = (parts.size() > 2) ? parts[2] : "";
-            } else {
-                // Column 2 is not amount, try column 3
-                amount = parseAmount(parts[2]);
-                description = parts[1];
+        try {
+            auto parts = splitLine(line);
+            if (parts.size() < 2) {
+                parseErrors++;
+                continue;  // Need at least date and amount
             }
-        } else if (parts.size() == 2) {
-            // Only date and amount
-            amount = parseAmount(parts[1]);
-            description = "";
+            
+            Transaction transaction;
+            
+            // Parse and validate date
+            try {
+                transaction.date = DateParser::parse(parts[0]);
+            } catch (const std::exception& e) {
+                parseErrors++;
+                continue;  // Skip transaction with invalid date
+            }
+            
+            // Look for amount - usually in 2nd or 3rd column
+            // For various formats: Date, Amount, Description OR Date, Description, Amount
+            double amount = 0.0;
+            std::string description;
+            
+            if (parts.size() >= 3) {
+                // Try column 2 as amount first
+                amount = parseAmount(parts[1]);
+                if (amount != 0.0 || parts[1].find_first_of("-0123456789.$") != std::string::npos) {
+                    // Column 2 is amount
+                    description = (parts.size() > 2) ? parts[2] : "";
+                } else {
+                    // Column 2 is not amount, try column 3
+                    amount = parseAmount(parts[2]);
+                    description = parts[1];
+                }
+            } else if (parts.size() == 2) {
+                // Only date and amount
+                amount = parseAmount(parts[1]);
+                description = "";
+            }
+            
+            transaction.amount = amount;
+            transaction.description = description;
+            
+            // Get balance if available (usually last column)
+            if (parts.size() >= 4) {
+                transaction.balance = parseAmount(parts[parts.size() - 1]);
+            }
+            
+            transaction.category = categorizeTransaction(transaction.description);
+            transaction.accountName = accountName;
+            
+            transactions.push_back(transaction);
+        } catch (const std::exception& e) {
+            parseErrors++;
+            // Continue parsing remaining lines
         }
-        
-        transaction.amount = amount;
-        transaction.description = description;
-        
-        // Get balance if available (usually last column)
-        if (parts.size() >= 4) {
-            transaction.balance = parseAmount(parts[parts.size() - 1]);
-        }
-        
-        transaction.category = categorizeTransaction(transaction.description);
-        transaction.accountName = accountName;
-        
-        transactions.push_back(transaction);
     }
     
     file.close();
+    
+    if (parseErrors > 0) {
+        throw std::runtime_error(std::to_string(parseErrors) + " lines failed to parse in " + filePath);
+    }
+    
     return transactions;
 }
 

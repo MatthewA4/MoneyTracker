@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "ConfigManager.h"
 
 struct Transaction {
     std::string date;
@@ -36,7 +37,7 @@ struct Transaction {
 
 class CSVParser {
 public:
-    CSVParser();
+    CSVParser(std::shared_ptr<ConfigManager> configManager = nullptr);
     ~CSVParser() = default;
     
     // Parse bank format CSV (debit/credit columns)
@@ -49,6 +50,8 @@ public:
     std::vector<Transaction> parse(const std::string& filePath, const std::string& accountName);
     
 private:
+    std::shared_ptr<ConfigManager> config;
+    
     std::vector<std::string> splitLine(const std::string& line, char delimiter = ',');
     std::string trim(const std::string& str);
     double parseAmount(const std::string& amount);
