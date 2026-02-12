@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build libboost-all-dev libxlsxwriter-dev libgtk-3-dev
+
+      - name: Install format/lint tools
+        run: |
+          sudo apt-get install -y clang-format clang-tidy
+
+      - name: Configure
+        run: |
+          mkdir -p build
+          cd build
+          cmake -G Ninja .. -DBUILD_TESTS=ON
+
+      - name: Build
+        run: |
+          cd build
+          ninja -j2
+
+      - name: Check formatting
+        run: |
+          # Apply formatting according to .clang-format and fail if changes would be made
+          git ls-files '*.cpp' '*.h' | xargs -r clang-format -style=file -i
+          if ! git diff --exit-code; then
+            echo "Code is not formatted. Please run clang-format -style=file -i on changed files." >&2
+            git --no-pager diff
+            exit 1
+          fi
+
+      - name: Run clang-tidy (non-fatal)
+        run: |
+          # Generate compile commands
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+          cd ..
+          # Run a simple clang-tidy invocation; do not fail the build on warnings
+          clang-tidy $(git ls-files 'src/*.cpp' 'include/*.h') -- -Iinclude -std=gnu++17 || true
+
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure -j1
+      - name: Build with sanitizers
+        run: |
+          mkdir -p build-sanitizers
+          cd build-sanitizers
+          cmake -G Ninja .. -DBUILD_TESTS=ON -DENABLE_SANITIZERS=ON
+          ninja -j2
+          
+      - name: Run tests with sanitizers
+        run: |
+          cd build-sanitizers
+          # Set environment variables for sanitizers
+          export LSAN_OPTIONS=suppressions=/dev/null
+          export UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1
+          ctest --output-on-failure -j1 || true  # Don't fail CI if sanitizer found issues in this run

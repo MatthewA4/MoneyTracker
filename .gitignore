@@ -1,27 +1,71 @@
 # Build artifacts
 build/
+build-*/
 CMakeFiles/
 cmake_install.cmake
 CMakeCache.txt
 *.o
 *.a
 *.so
+*.so.*
 *.exe
+*.dll
+*.dylib
+compile_commands.json
 
-# IDE
+# CMake/Ninja generated files
+*.ninja
+CMakeUserPresets.json
+.cmake/
+
+# IDE and Editor
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.clangd/
+.ccls-cache/
+*.user
+*.creator.user
 
-# Output files
+# Qt Creator
+CMakeLists.txt.user*
+
+# Clion
+.idea/
+cmake-build-*/
+
+# Output/Analysis files
 *.xlsx
 *.xls
+*.csv
+coverage/
+*.gcov
+*.gcda
+*.gcno
 
-# OS
+# Test outputs
+test_results/
+Testing/
+
+# Sanitizer outputs
+*.log
+ASAN_OPTIONS.txt
+UBSAN_OPTIONS.txt
+
+# OS-specific
 .DS_Store
 Thumbs.db
+.AppleDouble
+.LSOverride
 
 # Dependencies
 .conan/
+vcpkg_installed/
+_deps/
+
+# Temporary files
+*.tmp
+*.bak
+.#*

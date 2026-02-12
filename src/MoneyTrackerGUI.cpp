@@ -4,8 +4,9 @@
 #include "MoneyTrackerGUI.h"
 #include "CSVParser.h"
 #include "BudgetAnalyzer.h"
+#include "Logger.h"
+#include <glib.h>
 #include <sstream>
-#include <iostream>
 #include <iomanip>
 
 MoneyTrackerGUI::MoneyTrackerGUI()
@@ -166,6 +167,7 @@ void MoneyTrackerGUI::build_ui() {
 }
 
 void MoneyTrackerGUI::on_add_file(GtkWidget* widget, gpointer data) {
+    (void)widget;
     MoneyTrackerGUI* self = static_cast<MoneyTrackerGUI*>(data);
     
     GtkWidget* dialog = gtk_file_chooser_dialog_new(
@@ -206,6 +208,7 @@ void MoneyTrackerGUI::on_add_file(GtkWidget* widget, gpointer data) {
 }
 
 void MoneyTrackerGUI::on_remove_file(GtkWidget* widget, gpointer data) {
+    (void)widget;
     MoneyTrackerGUI* self = static_cast<MoneyTrackerGUI*>(data);
     if (!self->input_files.empty()) {
         self->input_files.pop_back();
@@ -214,6 +217,7 @@ void MoneyTrackerGUI::on_remove_file(GtkWidget* widget, gpointer data) {
 }
 
 void MoneyTrackerGUI::on_choose_output(GtkWidget* widget, gpointer data) {
+    (void)widget;
     MoneyTrackerGUI* self = static_cast<MoneyTrackerGUI*>(data);
     
     GtkWidget* dialog = gtk_file_chooser_dialog_new(
@@ -236,6 +240,7 @@ void MoneyTrackerGUI::on_choose_output(GtkWidget* widget, gpointer data) {
 }
 
 void MoneyTrackerGUI::on_choose_config(GtkWidget* widget, gpointer data) {
+    (void)widget;
     MoneyTrackerGUI* self = static_cast<MoneyTrackerGUI*>(data);
     
     GtkWidget* dialog = gtk_file_chooser_dialog_new(
@@ -256,19 +261,27 @@ void MoneyTrackerGUI::on_choose_config(GtkWidget* widget, gpointer data) {
 }
 
 void MoneyTrackerGUI::on_analyze(GtkWidget* widget, gpointer data) {
+    (void)widget;
     MoneyTrackerGUI* self = static_cast<MoneyTrackerGUI*>(data);
     self->run_analysis();
 }
 
 void MoneyTrackerGUI::on_open_excel(GtkWidget* widget, gpointer data) {
+    (void)widget;
     MoneyTrackerGUI* self = static_cast<MoneyTrackerGUI*>(data);
     const char* output_file = gtk_entry_get_text(GTK_ENTRY(self->output_entry));
-    
-    std::string cmd = "xdg-open \"" + std::string(output_file) + "\" &";
-    system(cmd.c_str());
+    std::string cmd = std::string("xdg-open \"") + output_file + "\"";
+    mt::Logger::info("Opening file: " + std::string(output_file));
+    // Use GLib to spawn command asynchronously (safer than system())
+    if (!g_spawn_command_line_async(cmd.c_str(), NULL)) {
+        mt::Logger::error("Failed to spawn command to open file: " + std::string(output_file));
+    }
 }
 
 gboolean MoneyTrackerGUI::on_window_close(GtkWidget* widget, GdkEvent* event, gpointer data) {
+    (void)widget;
+    (void)event;
+    (void)data;
     gtk_main_quit();
     return FALSE;
 }
@@ -397,6 +410,7 @@ void MoneyTrackerGUI::display_results() {
 }
 
 void MoneyTrackerGUI::show_error(const std::string& message) {
+    mt::Logger::error(message);
     GtkWidget* dialog = gtk_message_dialog_new(
         GTK_WINDOW(window),
         GTK_DIALOG_MODAL,
@@ -409,6 +423,7 @@ void MoneyTrackerGUI::show_error(const std::string& message) {
 }
 
 void MoneyTrackerGUI::show_info(const std::string& message) {
+    mt::Logger::info(message);
     GtkWidget* dialog = gtk_message_dialog_new(
         GTK_WINDOW(window),
         GTK_DIALOG_MODAL,

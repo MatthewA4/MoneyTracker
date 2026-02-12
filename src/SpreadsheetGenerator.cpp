@@ -167,6 +167,7 @@ bool SpreadsheetGenerator::createCategorySheet(void* wb, const TransactionData& 
     worksheet_write_string(worksheet, 0, 0, "Category", header_format);
     worksheet_write_string(worksheet, 0, 1, "Total Spending", header_format);
     
+    (void)data;
     auto categoryAnalysis = const_cast<BudgetAnalyzer&>(analyzer).getCategoryAnalysis();
     int row = 1;
     for (const auto& pair : categoryAnalysis) {
@@ -196,6 +197,7 @@ bool SpreadsheetGenerator::createMonthlySheet(void* wb, const TransactionData& d
     worksheet_write_string(worksheet, 0, 0, "Month", header_format);
     worksheet_write_string(worksheet, 0, 1, "Total Spending", header_format);
     
+    (void)data;
     auto monthlyTrends = const_cast<BudgetAnalyzer&>(analyzer).getMonthlyTrends();
     int row = 1;
     for (const auto& pair : monthlyTrends) {
@@ -208,6 +210,9 @@ bool SpreadsheetGenerator::createMonthlySheet(void* wb, const TransactionData& d
 }
 
 bool SpreadsheetGenerator::createCharts(void* wb, const TransactionData& data, const BudgetAnalyzer& analyzer) {
+    (void)wb;
+    (void)data;
+    (void)analyzer;
     // Note: Charts require more complex setup with proper series configuration.
     // This is a placeholder for future enhancement.
     return true;

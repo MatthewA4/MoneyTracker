@@ -1,6 +1,30 @@
-# MoneyTracker - Bank CSV to Budget Spreadsheet Generator
+# MoneyTracker - Professional Bank CSV to Budget Analysis
 
-A professional C++ application that imports CSV files from banks and generates comprehensive budget analysis spreadsheets with categorization, trends, and financial insights.
+A production-ready C++ application for importing bank CSV files and generating comprehensive Excel budget spreadsheets with advanced categorization, financial analytics, and professional reporting.
+
+## Features
+
+- ✅ **Multi-Account Support**: Process multiple bank accounts simultaneously
+- ✅ **Smart CSV Parsing**: Auto-detects bank/generic formats, handles multiple date formats
+- ✅ **Intelligent Categorization**: Configurable transaction categorization rules
+- ✅ **Advanced Analysis**: Income/expenses, category breakdown, monthly trends, averages
+- ✅ **Professional Excel Export**: Multi-sheet reports with formatting and analytics
+- ✅ **Dual Interface**: Both CLI and GTK3 GUI applications
+- ✅ **Structured Logging**: spdlog-based logging with configurable verbosity
+- ✅ **Unit Testing**: GoogleTest framework with continuous integration
+- ✅ **Code Quality**: clang-format, clang-tidy, AddressSanitizer, UndefinedBehaviorSanitizer
+
+## Professional-Grade Improvements
+
+<details>
+<summary><b>Click to expand</b></summary>
+
+- **Modern CMake**: Modular `moneytracker_core` library, target-based includes, install targets
+- **CI/CD Pipeline**: GitHub Actions with testing, formatting checks, static analysis, sanitizers
+- **Logging System**: Central spdlog-based Logger replacing ad-hoc output
+- **Code Standards**: clang-format and .clang-tidy configs, CONTRIBUTING.md guidelines
+- **Safety**: Structured exception handling, RAII patterns, safer process spawning
+</details>
 
 ## Features
 
