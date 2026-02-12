@@ -29,43 +29,74 @@ void MoneyTrackerGUI::run() {
 }
 
 void MoneyTrackerGUI::build_ui() {
+    // Apply custom CSS styling for modern look
+    GtkCssProvider* css_provider = gtk_css_provider_new();
+    const char* css_styles =
+        "window { background-color: #f5f5f5; }\n"
+        "button { padding: 6px 12px; border-radius: 3px; }\n"
+        "button:hover { background-color: #e0e0e0; }\n"
+        "entry { padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; }\n"
+        "textview { padding: 4px; }\n"
+        "label { font-size: 11pt; }\n"
+        ".header-label { font-size: 14pt; font-weight: bold; color: #333; margin: 10px 0px 5px 0px; }\n";
+    gtk_css_provider_load_from_data(css_provider, css_styles, -1, NULL);
+    gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
+                                               GTK_STYLE_PROVIDER(css_provider),
+                                               GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
     // Create main window
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window), "MoneyTracker - Budget Analysis");
-    gtk_window_set_default_size(GTK_WINDOW(window), 1000, 700);
+    gtk_window_set_title(GTK_WINDOW(window), "MoneyTracker - Budget Analysis Tool");
+    gtk_window_set_default_size(GTK_WINDOW(window), 1200, 800);
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+    gtk_window_set_icon_name(GTK_WINDOW(window), "application-vnd.oasis.opendocument.spreadsheet");
     
     g_signal_connect(window, "delete-event", G_CALLBACK(on_window_close), this);
     
-    // Main container
-    main_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    // Main container with padding
+    main_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
     gtk_container_add(GTK_CONTAINER(window), main_box);
-    gtk_container_set_border_width(GTK_CONTAINER(main_box), 10);
+    gtk_container_set_border_width(GTK_CONTAINER(main_box), 12);
     
     // Create notebook (tabs)
     notebook = gtk_notebook_new();
+    gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
     gtk_box_pack_start(GTK_BOX(main_box), notebook, TRUE, TRUE, 0);
     
     // ========== TAB 1: Input Files ==========
-    GtkWidget* input_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_set_border_width(GTK_CONTAINER(input_page), 10);
+    GtkWidget* input_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(input_page), 12);
     
-    GtkWidget* files_label = gtk_label_new("Input Files:");
-    gtk_box_pack_start(GTK_BOX(input_page), files_label, FALSE, FALSE, 0);
+    GtkWidget* files_header = gtk_label_new("📁 Input CSV Files");
+    gtk_style_context_add_class(gtk_widget_get_style_context(files_header), "header-label");
+    gtk_label_set_xalign(GTK_LABEL(files_header), 0.0);
+    gtk_box_pack_start(GTK_BOX(input_page), files_header, FALSE, FALSE, 0);
     
     // File list with scrolling
     GtkWidget* scrolled = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
                                    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_widget_set_size_request(scrolled, -1, 200);
     file_list = gtk_text_view_new();
     gtk_text_view_set_editable(GTK_TEXT_VIEW(file_list), FALSE);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(file_list), GTK_WRAP_WORD);
     gtk_container_add(GTK_CONTAINER(scrolled), file_list);
     gtk_box_pack_start(GTK_BOX(input_page), scrolled, TRUE, TRUE, 0);
     
-    // File buttons
-    GtkWidget* file_btn_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-    GtkWidget* add_btn = gtk_button_new_with_label("Add File");
-    GtkWidget* remove_btn = gtk_button_new_with_label("Remove Selected");
+    // File buttons with icons
+    GtkWidget* file_btn_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    gtk_box_set_homogeneous(GTK_BOX(file_btn_box), FALSE);
+    
+    GtkWidget* add_btn = gtk_button_new_from_icon_name("list-add", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_label(GTK_BUTTON(add_btn), "Add File");
+    gtk_button_set_always_show_image(GTK_BUTTON(add_btn), TRUE);
+    gtk_widget_set_tooltip_text(add_btn, "Add a CSV file to analyze");
+    
+    GtkWidget* remove_btn = gtk_button_new_from_icon_name("list-remove", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_label(GTK_BUTTON(remove_btn), "Remove");
+    gtk_button_set_always_show_image(GTK_BUTTON(remove_btn), TRUE);
+    gtk_widget_set_tooltip_text(remove_btn, "Remove the last added file");
+    
     gtk_box_pack_start(GTK_BOX(file_btn_box), add_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(file_btn_box), remove_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(input_page), file_btn_box, FALSE, FALSE, 0);
@@ -73,12 +104,23 @@ void MoneyTrackerGUI::build_ui() {
     g_signal_connect(add_btn, "clicked", G_CALLBACK(on_add_file), this);
     g_signal_connect(remove_btn, "clicked", G_CALLBACK(on_remove_file), this);
     
-    // Output file selection
-    GtkWidget* output_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-    GtkWidget* output_label = gtk_label_new("Output Excel File:");
+    // Output file selection section
+    GtkWidget* output_header = gtk_label_new("📊 Output File");
+    gtk_style_context_add_class(gtk_widget_get_style_context(output_header), "header-label");
+    gtk_label_set_xalign(GTK_LABEL(output_header), 0.0);
+    gtk_box_pack_start(GTK_BOX(input_page), output_header, FALSE, FALSE, 0);
+    
+    GtkWidget* output_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    GtkWidget* output_label = gtk_label_new("File:");
     output_entry = gtk_entry_new();
     gtk_entry_set_text(GTK_ENTRY(output_entry), "budget_report.xlsx");
-    GtkWidget* output_btn = gtk_button_new_with_label("Browse");
+    gtk_widget_set_size_request(output_entry, 300, -1);
+    
+    GtkWidget* output_btn = gtk_button_new_from_icon_name("document-open", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_label(GTK_BUTTON(output_btn), "Browse");
+    gtk_button_set_always_show_image(GTK_BUTTON(output_btn), TRUE);
+    gtk_widget_set_tooltip_text(output_btn, "Choose output Excel file location");
+    
     gtk_box_pack_start(GTK_BOX(output_box), output_label, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(output_box), output_entry, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(output_box), output_btn, FALSE, FALSE, 0);
@@ -87,17 +129,30 @@ void MoneyTrackerGUI::build_ui() {
     g_signal_connect(output_btn, "clicked", G_CALLBACK(on_choose_output), this);
     
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), input_page,
-                             gtk_label_new("Input"));
+                             gtk_label_new("📁 Input Files"));
     
     // ========== TAB 2: Configuration ==========
-    GtkWidget* config_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-    gtk_container_set_border_width(GTK_CONTAINER(config_page), 10);
+    GtkWidget* config_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
+    gtk_container_set_border_width(GTK_CONTAINER(config_page), 12);
     
-    GtkWidget* cat_config_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-    GtkWidget* cat_label = gtk_label_new("Category Config:");
+    GtkWidget* config_header = gtk_label_new("⚙️ Configuration");
+    gtk_style_context_add_class(gtk_widget_get_style_context(config_header), "header-label");
+    gtk_label_set_xalign(GTK_LABEL(config_header), 0.0);
+    gtk_box_pack_start(GTK_BOX(config_page), config_header, FALSE, FALSE, 0);
+    
+    GtkWidget* cat_config_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    GtkWidget* cat_label = gtk_label_new("Category Rules:");
     category_config_entry = gtk_entry_new();
     gtk_entry_set_text(GTK_ENTRY(category_config_entry), "data/categories.json");
-    GtkWidget* cat_btn = gtk_button_new_with_label("Browse");
+    gtk_widget_set_size_request(category_config_entry, 350, -1);
+    gtk_widget_set_tooltip_text(category_config_entry,
+        "Path to categories.json file with transaction categorization rules");
+    
+    GtkWidget* cat_btn = gtk_button_new_from_icon_name("document-open", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_label(GTK_BUTTON(cat_btn), "Browse");
+    gtk_button_set_always_show_image(GTK_BUTTON(cat_btn), TRUE);
+    gtk_widget_set_tooltip_text(cat_btn, "Select category configuration file");
+    
     gtk_box_pack_start(GTK_BOX(cat_config_box), cat_label, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(cat_config_box), category_config_entry, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(cat_config_box), cat_btn, FALSE, FALSE, 0);
@@ -106,64 +161,147 @@ void MoneyTrackerGUI::build_ui() {
     g_signal_connect(cat_btn, "clicked", G_CALLBACK(on_choose_config), this);
     
     GtkWidget* info_label = gtk_label_new(
-        "Configure category rules and other settings.\n"
-        "Use data/categories.json as template.");
-    gtk_box_pack_start(GTK_BOX(config_page), info_label, TRUE, TRUE, 0);
+        "Use categories.json to define custom transaction categorization rules.\n"
+        "Format: JSON file with category patterns and keywords.");
+    gtk_label_set_xalign(GTK_LABEL(info_label), 0.0);
+    gtk_label_set_line_wrap(GTK_LABEL(info_label), TRUE);
+    gtk_box_pack_start(GTK_BOX(config_page), info_label, FALSE, FALSE, 0);
+    
+    // Add an info box
+    GtkWidget* info_box = gtk_event_box_new();
+    GdkRGBA color = {0.9, 0.95, 1.0, 1.0};
+    gtk_widget_override_background_color(info_box, GTK_STATE_FLAG_NORMAL, &color);
+    
+    GtkWidget* info_inner = gtk_label_new("💡 Tip: Add your own patterns to categories.json for better categorization");
+    gtk_widget_set_margin_top(info_inner, 8);
+    gtk_widget_set_margin_bottom(info_inner, 8);
+    gtk_widget_set_margin_start(info_inner, 8);
+    gtk_widget_set_margin_end(info_inner, 8);
+    gtk_container_add(GTK_CONTAINER(info_box), info_inner);
+    gtk_box_pack_start(GTK_BOX(config_page), info_box, FALSE, FALSE, 0);
     
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), config_page,
-                             gtk_label_new("Configuration"));
+                             gtk_label_new("⚙️ Config"));
     
     // ========== TAB 3: Summary Results ==========
+    GtkWidget* summary_scrolled = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(summary_scrolled),
+                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     summary_text = gtk_text_view_new();
     gtk_text_view_set_editable(GTK_TEXT_VIEW(summary_text), FALSE);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(summary_text), GTK_WRAP_WORD);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), summary_text,
-                             gtk_label_new("Summary"));
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(summary_text), 8);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(summary_text), 8);
+    gtk_container_add(GTK_CONTAINER(summary_scrolled), summary_text);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), summary_scrolled,
+                             gtk_label_new("📈 Summary"));
     
     // ========== TAB 4: Category Breakdown ==========
+    GtkWidget* category_scrolled = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(category_scrolled),
+                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     category_text = gtk_text_view_new();
     gtk_text_view_set_editable(GTK_TEXT_VIEW(category_text), FALSE);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(category_text), GTK_WRAP_WORD);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), category_text,
-                             gtk_label_new("Categories"));
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(category_text), 8);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(category_text), 8);
+    gtk_container_add(GTK_CONTAINER(category_scrolled), category_text);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), category_scrolled,
+                             gtk_label_new("🏷️ Categories"));
     
     // ========== TAB 5: Monthly Trends ==========
+    GtkWidget* monthly_scrolled = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(monthly_scrolled),
+                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     monthly_text = gtk_text_view_new();
     gtk_text_view_set_editable(GTK_TEXT_VIEW(monthly_text), FALSE);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(monthly_text), GTK_WRAP_WORD);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), monthly_text,
-                             gtk_label_new("Monthly Trends"));
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(monthly_text), 8);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(monthly_text), 8);
+    gtk_container_add(GTK_CONTAINER(monthly_scrolled), monthly_text);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), monthly_scrolled,
+                             gtk_label_new("📅 Trends"));
     
     // ========== TAB 6: Transactions ==========
+    GtkWidget* trans_scrolled = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(trans_scrolled),
+                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     transactions_text = gtk_text_view_new();
     gtk_text_view_set_editable(GTK_TEXT_VIEW(transactions_text), FALSE);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(transactions_text), GTK_WRAP_NONE);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), transactions_text,
-                             gtk_label_new("Transactions"));
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(transactions_text), 8);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(transactions_text), 8);
+    gtk_container_add(GTK_CONTAINER(trans_scrolled), transactions_text);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), trans_scrolled,
+                             gtk_label_new("💰 Transactions"));
     
     // Progress and status
-    GtkWidget* progress_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    GtkWidget* progress_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    gtk_container_set_border_width(GTK_CONTAINER(progress_box), 8);
+    gtk_style_context_add_class(gtk_widget_get_style_context(progress_box), "progress-box");
+    
     progress_bar = gtk_progress_bar_new();
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), 0.0);
-    status_label = gtk_label_new("Ready");
+    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress_bar), TRUE);
+    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), "Ready");
+    gtk_widget_set_size_request(progress_bar, -1, 24);
+    
+    status_label = gtk_label_new("✓ Ready to analyze");
+    gtk_label_set_xalign(GTK_LABEL(status_label), 0.0);
+    gtk_style_context_add_class(gtk_widget_get_style_context(status_label), "status-label");
+    
     gtk_box_pack_start(GTK_BOX(progress_box), progress_bar, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(progress_box), status_label, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(main_box), progress_box, FALSE, FALSE, 0);
     
-    // Action buttons
-    GtkWidget* button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-    GtkWidget* analyze_btn = gtk_button_new_with_label("Analyze");
-    GtkWidget* excel_btn = gtk_button_new_with_label("Open Excel File");
-    GtkWidget* quit_btn = gtk_button_new_with_label("Quit");
+    // Action buttons with better styling
+    GtkWidget* button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    gtk_box_set_homogeneous(GTK_BOX(button_box), FALSE);
+    gtk_container_set_border_width(GTK_CONTAINER(button_box), 8);
+    
+    GtkWidget* analyze_btn = gtk_button_new_from_icon_name("media-playback-start", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_label(GTK_BUTTON(analyze_btn), "Analyze Files");
+    gtk_button_set_always_show_image(GTK_BUTTON(analyze_btn), TRUE);
+    gtk_widget_set_tooltip_text(analyze_btn, "Analyze selected CSV files and generate report (Ctrl+A)");
+    gtk_widget_set_size_request(analyze_btn, 140, 40);
+    
+    GtkWidget* excel_btn = gtk_button_new_from_icon_name("document-open-recent", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_label(GTK_BUTTON(excel_btn), "Open Report");
+    gtk_button_set_always_show_image(GTK_BUTTON(excel_btn), TRUE);
+    gtk_widget_set_tooltip_text(excel_btn, "Open the generated Excel file (Ctrl+O)");
     
     gtk_box_pack_start(GTK_BOX(button_box), analyze_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(button_box), excel_btn, FALSE, FALSE, 0);
+    
+    // Spacer
+    gtk_box_pack_start(GTK_BOX(button_box), gtk_label_new(""), TRUE, TRUE, 0);
+    
+    // Quit button on the right
+    GtkWidget* quit_btn = gtk_button_new_from_icon_name("application-exit", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_label(GTK_BUTTON(quit_btn), "Quit");
+    gtk_button_set_always_show_image(GTK_BUTTON(quit_btn), TRUE);
+    gtk_widget_set_tooltip_text(quit_btn, "Close MoneyTracker (Ctrl+Q)");
     gtk_box_pack_end(GTK_BOX(button_box), quit_btn, FALSE, FALSE, 0);
+    
     gtk_box_pack_start(GTK_BOX(main_box), button_box, FALSE, FALSE, 0);
     
+    // Connect signals
     g_signal_connect(analyze_btn, "clicked", G_CALLBACK(on_analyze), this);
     g_signal_connect(excel_btn, "clicked", G_CALLBACK(on_open_excel), this);
     g_signal_connect(quit_btn, "clicked", G_CALLBACK(gtk_main_quit), NULL);
+    
+    // Add keyboard accelerators
+    GtkAccelGroup* accel_group = gtk_accel_group_new();
+    gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
+    
+    gtk_widget_add_accelerator(analyze_btn, "clicked", accel_group,
+                               GDK_KEY_a, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+    gtk_widget_add_accelerator(excel_btn, "clicked", accel_group,
+                               GDK_KEY_o, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+    gtk_widget_add_accelerator(quit_btn, "clicked", accel_group,
+                               GDK_KEY_q, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+    gtk_widget_add_accelerator(add_btn, "clicked", accel_group,
+                               GDK_KEY_n, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 }
 
 void MoneyTrackerGUI::on_add_file(GtkWidget* widget, gpointer data) {
