@@ -52,6 +52,7 @@ set(CORE_SOURCES
     src/ConfigManager.cpp
     src/AlertSystem.cpp
     src/Logger.cpp
+    src/Security.cpp
 )
 
 # Create a reusable core library for the project
