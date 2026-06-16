@@ -5,13 +5,17 @@
 #include "CSVParser.h"
 #include "BudgetAnalyzer.h"
 #include "Logger.h"
+#include "AIAssistant.h"
 #include <glib.h>
 #include <sstream>
 #include <iomanip>
 
 MoneyTrackerGUI::MoneyTrackerGUI()
     : window(nullptr), transaction_data(std::make_shared<TransactionData>()),
-      config_manager(std::make_shared<ConfigManager>()) {
+      config_manager(std::make_shared<ConfigManager>()),
+      ai_assistant(nullptr),
+      chat_input(nullptr), chat_output(nullptr), chat_send_btn(nullptr),
+      ollama_status_label(nullptr), model_combo(nullptr) {
     
     config_manager->loadCategoriesFromFile("data/categories.json");
 }
@@ -234,6 +238,9 @@ void MoneyTrackerGUI::build_ui() {
     gtk_container_add(GTK_CONTAINER(trans_scrolled), transactions_text);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), trans_scrolled,
                              gtk_label_new("💰 Transactions"));
+    
+    // ========== TAB 7: AI Chat ==========
+    build_chat_tab();
     
     // Progress and status
     GtkWidget* progress_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
@@ -571,4 +578,248 @@ void MoneyTrackerGUI::show_info(const std::string& message) {
     
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
+}
+
+void MoneyTrackerGUI::build_chat_tab() {
+    // Create AI assistant
+    ai_assistant = std::make_shared<moneytracker::AIAssistant>();
+    
+    // Main container for chat tab
+    GtkWidget* chat_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(chat_page), 12);
+    
+    // ========== Setup Section ==========
+    GtkWidget* setup_frame = gtk_frame_new("🤖 Ollama Setup");
+    GtkWidget* setup_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+    gtk_container_set_border_width(GTK_CONTAINER(setup_box), 8);
+    gtk_container_add(GTK_CONTAINER(setup_frame), setup_box);
+    
+    // Status row
+    GtkWidget* status_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    gtk_box_set_homogeneous(GTK_BOX(status_row), FALSE);
+    
+    GtkWidget* status_icon = gtk_label_new("🔴");
+    ollama_status_label = gtk_label_new("Checking...");
+    gtk_box_pack_start(GTK_BOX(status_row), status_icon, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(status_row), ollama_status_label, TRUE, TRUE, 0);
+    
+    GtkWidget* test_btn = gtk_button_new_with_label("Test Connection");
+    gtk_button_set_image(GTK_BUTTON(test_btn), gtk_image_new_from_icon_name("network-server", GTK_ICON_SIZE_BUTTON));
+    gtk_button_set_always_show_image(GTK_BUTTON(test_btn), TRUE);
+    g_signal_connect(test_btn, "clicked", G_CALLBACK(on_test_connection), this);
+    gtk_box_pack_start(GTK_BOX(status_row), test_btn, FALSE, FALSE, 0);
+    
+    gtk_box_pack_start(GTK_BOX(setup_box), status_row, FALSE, FALSE, 0);
+    
+    // Model selection row
+    GtkWidget* model_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    gtk_box_set_homogeneous(GTK_BOX(model_row), FALSE);
+    
+    GtkWidget* model_label = gtk_label_new("Model:");
+    model_combo = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(model_combo), "llama3", "Llama 3");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(model_combo), "mistral", "Mistral");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(model_combo), "codellama", "Code Llama");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(model_combo), "phi", "Phi");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(model_combo), 0);
+    g_signal_connect(model_combo, "changed", G_CALLBACK(on_model_changed), this);
+    
+    gtk_box_pack_start(GTK_BOX(model_row), model_label, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(model_row), model_combo, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(setup_box), model_row, FALSE, FALSE, 0);
+    
+    // Help text
+    GtkWidget* help_label = gtk_label_new(
+        "💡 To use AI chat:\n"
+        "   1. Install Ollama: curl -fsSL https://ollama.com/install | sh\n"
+        "   2. Run: ollama serve\n"
+        "   3. Pull a model: ollama pull llama3");
+    gtk_label_set_xalign(GTK_LABEL(help_label), 0.0);
+    gtk_box_pack_start(GTK_BOX(setup_box), help_label, FALSE, FALSE, 0);
+    
+    gtk_box_pack_start(GTK_BOX(chat_page), setup_frame, FALSE, FALSE, 0);
+    
+    // ========== Chat Section ==========
+    GtkWidget* chat_frame = gtk_frame_new("💬 Ask about your finances");
+    GtkWidget* chat_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+    gtk_container_set_border_width(GTK_CONTAINER(chat_box), 8);
+    gtk_container_add(GTK_CONTAINER(chat_frame), chat_box);
+    
+    // Chat output (scrollable)
+    GtkWidget* chat_scrolled = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(chat_scrolled),
+                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_widget_set_size_request(chat_scrolled, -1, 300);
+    
+    chat_output = gtk_text_view_new();
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(chat_output), FALSE);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(chat_output), GTK_WRAP_WORD);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(chat_output), 8);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(chat_output), 8);
+    
+    // Set background color for chat output
+    GdkColor bg_color;
+    gdk_color_parse("#fafafa", &bg_color);
+    gtk_widget_modify_base(chat_output, GTK_STATE_NORMAL, &bg_color);
+    
+    gtk_container_add(GTK_CONTAINER(chat_scrolled), chat_output);
+    gtk_box_pack_start(GTK_BOX(chat_box), chat_scrolled, TRUE, TRUE, 0);
+    
+    // Input row
+    GtkWidget* input_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    gtk_box_set_homogeneous(GTK_BOX(input_row), FALSE);
+    
+    chat_input = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(chat_input), 
+        "Ask: 'How much did I spend on groceries?' or 'Am I overspending in dining out?'");
+    gtk_widget_set_size_request(chat_input, 400, -1);
+    g_object_set_data(G_OBJECT(chat_input), "gui", this);
+    g_signal_connect(chat_input, "activate", G_CALLBACK(on_chat_send), chat_input);
+    gtk_box_pack_start(GTK_BOX(input_row), chat_input, TRUE, TRUE, 0);
+    
+    chat_send_btn = gtk_button_new_with_label("Send");
+    gtk_button_set_image(GTK_BUTTON(chat_send_btn), gtk_image_new_from_icon_name("mail-send", GTK_ICON_SIZE_BUTTON));
+    gtk_button_set_always_show_image(GTK_BUTTON(chat_send_btn), TRUE);
+    g_object_set_data(G_OBJECT(chat_send_btn), "gui", this);
+    g_signal_connect(chat_send_btn, "clicked", G_CALLBACK(on_chat_send), chat_send_btn);
+    gtk_box_pack_start(GTK_BOX(input_row), chat_send_btn, FALSE, FALSE, 0);
+    
+    gtk_box_pack_start(GTK_BOX(chat_box), input_row, FALSE, FALSE, 0);
+    
+    // Quick questions
+    GtkWidget* quick_frame = gtk_frame_new("Quick Questions");
+    GtkWidget* quick_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+    gtk_container_set_border_width(GTK_CONTAINER(quick_box), 5);
+    gtk_container_add(GTK_CONTAINER(quick_frame), quick_box);
+    
+    const char* quick_questions[] = {
+        "Top spending categories?",
+        "Monthly trends?",
+        "Unusual transactions?",
+        "Budget advice?"
+    };
+    
+    for (const char* q : quick_questions) {
+        GtkWidget* btn = gtk_button_new_with_label(q);
+        gtk_button_set_always_show_image(GTK_BUTTON(btn), TRUE);
+        // Store the question in the button for retrieval
+        g_object_set_data(G_OBJECT(btn), "question", g_strdup(q));
+        g_object_set_data(G_OBJECT(btn), "gui", this);
+        g_signal_connect(btn, "clicked", G_CALLBACK(on_chat_send), btn);
+        gtk_box_pack_start(GTK_BOX(quick_box), btn, FALSE, FALSE, 0);
+    }
+    
+    gtk_box_pack_start(GTK_BOX(chat_box), quick_frame, FALSE, FALSE, 0);
+    
+    gtk_box_pack_start(GTK_BOX(chat_page), chat_frame, TRUE, TRUE, 0);
+    
+    // Add to notebook
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), chat_page,
+                             gtk_label_new("🤖 AI Assistant"));
+    
+    // Initial status check
+    update_ollama_status();
+}
+
+void MoneyTrackerGUI::update_ollama_status() {
+    if (moneytracker::AIAssistant::checkOllamaInstalled()) {
+        gtk_label_set_text(GTK_LABEL(ollama_status_label), "🟢 Ollama is running");
+        
+        // Try to get available models
+        auto models = ai_assistant->listModels();
+        if (!models.empty()) {
+            std::string status = "🟢 Ollama ready - " + std::to_string(models.size()) + " model(s) available";
+            gtk_label_set_text(GTK_LABEL(ollama_status_label), status.c_str());
+        }
+    } else {
+        gtk_label_set_text(GTK_LABEL(ollama_status_label), 
+            "🔴 Ollama not running. Install from https://ollama.ai");
+    }
+}
+
+void MoneyTrackerGUI::on_test_connection(GtkWidget* widget, gpointer data) {
+    (void)widget;
+    MoneyTrackerGUI* self = static_cast<MoneyTrackerGUI*>(data);
+    
+    std::string result = self->ai_assistant->testConnection();
+    self->show_info(result);
+    self->update_ollama_status();
+}
+
+void MoneyTrackerGUI::on_model_changed(GtkWidget* widget, gpointer data) {
+    MoneyTrackerGUI* self = static_cast<MoneyTrackerGUI*>(data);
+    
+    const gchar* active_id = gtk_combo_box_get_active_id(GTK_COMBO_BOX(widget));
+    if (active_id && self->ai_assistant) {
+        moneytracker::AIConfig config = self->ai_assistant->getConfig();
+        config.model = active_id;
+        self->ai_assistant->setConfig(config);
+    }
+}
+
+void MoneyTrackerGUI::on_chat_send(GtkWidget* widget, gpointer data) {
+    // Get self pointer from the widget's data
+    GtkWidget* clicked_widget = static_cast<GtkWidget*>(data);
+    MoneyTrackerGUI* self = static_cast<MoneyTrackerGUI*>(g_object_get_data(G_OBJECT(clicked_widget), "gui"));
+    
+    if (!self) {
+        return;  // Invalid state
+    }
+    
+    // Get the question - either from input or quick question button
+    std::string question;
+    
+    // Check if this is a quick question button (has "question" data)
+    const char* quick_q = (const char*)g_object_get_data(G_OBJECT(clicked_widget), "question");
+    if (quick_q) {
+        question = quick_q;
+    } else {
+        // Get from input entry
+        const char* input_text = gtk_entry_get_text(GTK_ENTRY(self->chat_input));
+        question = input_text ? input_text : "";
+    }
+    
+    if (question.empty()) {
+        self->show_error("Please enter a question");
+        return;
+    }
+    
+    if (!moneytracker::AIAssistant::checkOllamaInstalled()) {
+        self->show_error("Ollama is not running. Please start Ollama and try again.");
+        return;
+    }
+    
+    // Check if we have transaction data
+    if (self->transaction_data->getAllTransactions().empty()) {
+        self->show_error("Please import some CSV files first and run analysis!");
+        return;
+    }
+    
+    // Show loading state
+    GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(self->chat_output));
+    std::string current_text = "🤔 Thinking...\n\n";
+    gtk_text_buffer_set_text(buffer, current_text.c_str(), -1);
+    
+    gtk_widget_set_sensitive(self->chat_send_btn, FALSE);
+    
+    // Send to AI with transaction context
+    if (self->ai_assistant) {
+        moneytracker::AIResponse response = self->ai_assistant->chatWithContext(question, *self->transaction_data);
+        
+        gtk_widget_set_sensitive(self->chat_send_btn, TRUE);
+        
+        if (response.success) {
+            std::string output = "📝 You: " + question + "\n\n🤖 AI:\n" + response.content;
+            gtk_text_buffer_set_text(buffer, output.c_str(), -1);
+            
+            // Clear input
+            gtk_entry_set_text(GTK_ENTRY(self->chat_input), "");
+        } else {
+            std::string error = "Error: " + response.errorMessage;
+            gtk_text_buffer_set_text(buffer, error.c_str(), -1);
+        }
+    } else {
+        gtk_text_buffer_set_text(buffer, "Error: AI Assistant not initialized", -1);
+        gtk_widget_set_sensitive(self->chat_send_btn, TRUE);
+    }
 }

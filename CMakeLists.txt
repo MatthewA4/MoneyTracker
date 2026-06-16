@@ -15,6 +15,14 @@ endif()
 # Find required packages
 find_package(Boost 1.70.0 REQUIRED COMPONENTS system filesystem program_options)
 
+# Find libcurl for AI assistant
+find_library(CURL_LIBRARY curl)
+find_path(CURL_INCLUDE_DIR curl/curl.h)
+
+if(NOT CURL_LIBRARY OR NOT CURL_INCLUDE_DIR)
+    message(FATAL_ERROR "libcurl not found. Please install libcurl4-openssl-dev")
+endif()
+
 # Find pkg-config
 find_package(PkgConfig REQUIRED)
 
@@ -53,6 +61,7 @@ set(CORE_SOURCES
     src/AlertSystem.cpp
     src/Logger.cpp
     src/Security.cpp
+    src/AIAssistant.cpp
 )
 
 # Create a reusable core library for the project
@@ -62,6 +71,7 @@ target_include_directories(moneytracker_core
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     PRIVATE ${XLSXWRITER_INCLUDE_DIR}
+    PRIVATE ${CURL_INCLUDE_DIR}
 )
 target_compile_features(moneytracker_core PUBLIC cxx_std_17)
 target_compile_options(moneytracker_core PRIVATE -Wall -Wextra)
@@ -72,6 +82,7 @@ target_link_libraries(moneytracker_core
     Boost::program_options
     ${XLSXWRITER_LIBRARY}
     PUBLIC spdlog::spdlog
+    PUBLIC ${CURL_LIBRARY}
 )
 
 if(ENABLE_SANITIZERS)
@@ -97,14 +108,14 @@ endif()
 
 # CLI Application
 add_executable(moneytracker src/main.cpp)
-target_link_libraries(moneytracker PRIVATE moneytracker_core)
+target_link_libraries(moneytracker PRIVATE moneytracker_core ${CURL_LIBRARY})
 
 # GUI Application (if GTK3 is available)
 if(GTK3_FOUND)
     message(STATUS "GTK3 found - building GUI application")
     
     add_executable(moneytracker-gui src/main_gui.cpp src/MoneyTrackerGUI.cpp)
-    target_link_libraries(moneytracker-gui PRIVATE moneytracker_core ${GTK3_LIBRARIES})
+    target_link_libraries(moneytracker-gui PRIVATE moneytracker_core ${GTK3_LIBRARIES} ${CURL_LIBRARY})
     target_include_directories(moneytracker-gui PRIVATE ${GTK3_INCLUDE_DIRS})
     install(TARGETS moneytracker-gui RUNTIME DESTINATION bin)
 else()
@@ -162,6 +173,7 @@ if(BUILD_TESTS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dateparser.cpp
         Boost::program_options
         ${XLSXWRITER_LIBRARY}
         spdlog::spdlog
+        ${CURL_LIBRARY}
     )
     target_include_directories(run_tests PRIVATE ${PROJECT_SOURCE_DIR}/include)
     add_test(NAME UnitTests COMMAND run_tests)

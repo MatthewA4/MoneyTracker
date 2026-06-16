@@ -12,8 +12,25 @@ ConfigManager::ConfigManager() {
 }
 
 bool ConfigManager::loadCategoriesFromFile(const std::string& filePath) {
-    // Simple JSON parsing - for production would use a proper JSON library
-    std::ifstream file(filePath);
+    // Try multiple possible paths for the categories file
+    std::vector<std::string> pathsToTry = {
+        filePath,                                    // User-provided path
+        "data/categories.json",                      // Relative from project root
+        "../data/categories.json",                   // Relative from build directory
+        "../../data/categories.json",               // Backup relative path
+    };
+    
+    std::ifstream file;
+    std::string actualPath;
+    
+    for (const auto& path : pathsToTry) {
+        file.open(path);
+        if (file.is_open()) {
+            actualPath = path;
+            break;
+        }
+    }
+    
     if (!file.is_open()) {
         std::cerr << "Warning: Could not load categories from " << filePath << ", using defaults" << std::endl;
         return false;

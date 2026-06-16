@@ -9,6 +9,7 @@
 #include "TransactionData.h"
 #include "BudgetAnalyzer.h"
 #include "ConfigManager.h"
+#include "AIAssistant.h"
 
 class MoneyTrackerGUI {
 public:
@@ -35,6 +36,13 @@ private:
     GtkWidget* monthly_text;
     GtkWidget* transactions_text;
     
+    // Chat/AI widgets
+    GtkWidget* chat_input;
+    GtkWidget* chat_output;
+    GtkWidget* chat_send_btn;
+    GtkWidget* ollama_status_label;
+    GtkWidget* model_combo;
+    
     // Processing
     GtkWidget* progress_bar;
     GtkWidget* status_label;
@@ -43,6 +51,7 @@ private:
     std::vector<std::pair<std::string, std::string>> input_files;  // <path, account_name>
     std::shared_ptr<TransactionData> transaction_data;
     std::shared_ptr<ConfigManager> config_manager;
+    std::shared_ptr<moneytracker::AIAssistant> ai_assistant;
     
     // Callbacks
     static void on_add_file(GtkWidget* widget, gpointer data);
@@ -51,6 +60,9 @@ private:
     static void on_choose_config(GtkWidget* widget, gpointer data);
     static void on_analyze(GtkWidget* widget, gpointer data);
     static void on_open_excel(GtkWidget* widget, gpointer data);
+    static void on_chat_send(GtkWidget* widget, gpointer data);
+    static void on_model_changed(GtkWidget* widget, gpointer data);
+    static void on_test_connection(GtkWidget* widget, gpointer data);
     static gboolean on_window_close(GtkWidget* widget, GdkEvent* event, gpointer data);
     
     // Helper methods
@@ -60,4 +72,6 @@ private:
     void display_results();
     void show_error(const std::string& message);
     void show_info(const std::string& message);
+    void build_chat_tab();
+    void update_ollama_status();
 };
