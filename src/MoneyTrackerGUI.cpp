@@ -11,11 +11,15 @@
 #include <iomanip>
 
 MoneyTrackerGUI::MoneyTrackerGUI()
-    : window(nullptr), transaction_data(std::make_shared<TransactionData>()),
+    : window(nullptr), main_box(nullptr), notebook(nullptr),
+      file_list(nullptr), account_list(nullptr), output_entry(nullptr),
+      category_config_entry(nullptr), summary_text(nullptr), category_text(nullptr),
+      monthly_text(nullptr), transactions_text(nullptr), chat_input(nullptr),
+      chat_output(nullptr), chat_send_btn(nullptr), ollama_status_label(nullptr),
+      model_combo(nullptr), progress_bar(nullptr), status_label(nullptr),
+      transaction_data(std::make_shared<TransactionData>()),
       config_manager(std::make_shared<ConfigManager>()),
-      ai_assistant(nullptr),
-      chat_input(nullptr), chat_output(nullptr), chat_send_btn(nullptr),
-      ollama_status_label(nullptr), model_combo(nullptr) {
+      ai_assistant(nullptr) {
     
     config_manager->loadCategoriesFromFile("data/categories.json");
 }
@@ -42,7 +46,9 @@ void MoneyTrackerGUI::build_ui() {
         "entry { padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; }\n"
         "textview { padding: 4px; }\n"
         "label { font-size: 11pt; }\n"
-        ".header-label { font-size: 14pt; font-weight: bold; color: #333; margin: 10px 0px 5px 0px; }\n";
+        ".header-label { font-size: 14pt; font-weight: bold; color: #333; margin: 10px 0px 5px 0px; }\n"
+        ".info-box { background-color: #e6f2ff; border-radius: 4px; padding: 8px; }\n"
+        "textview.chat-output { background-color: #fafafa; }\n";
     gtk_css_provider_load_from_data(css_provider, css_styles, -1, NULL);
     gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
                                                GTK_STYLE_PROVIDER(css_provider),
@@ -173,8 +179,7 @@ void MoneyTrackerGUI::build_ui() {
     
     // Add an info box
     GtkWidget* info_box = gtk_event_box_new();
-    GdkRGBA color = {0.9, 0.95, 1.0, 1.0};
-    gtk_widget_override_background_color(info_box, GTK_STATE_FLAG_NORMAL, &color);
+    gtk_style_context_add_class(gtk_widget_get_style_context(info_box), "info-box");
     
     GtkWidget* info_inner = gtk_label_new("💡 Tip: Add your own patterns to categories.json for better categorization");
     gtk_widget_set_margin_top(info_inner, 8);
@@ -657,10 +662,8 @@ void MoneyTrackerGUI::build_chat_tab() {
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(chat_output), 8);
     gtk_text_view_set_right_margin(GTK_TEXT_VIEW(chat_output), 8);
     
-    // Set background color for chat output
-    GdkColor bg_color;
-    gdk_color_parse("#fafafa", &bg_color);
-    gtk_widget_modify_base(chat_output, GTK_STATE_NORMAL, &bg_color);
+    // Style chat output with CSS instead of deprecated GTK APIs
+    gtk_style_context_add_class(gtk_widget_get_style_context(chat_output), "chat-output");
     
     gtk_container_add(GTK_CONTAINER(chat_scrolled), chat_output);
     gtk_box_pack_start(GTK_BOX(chat_box), chat_scrolled, TRUE, TRUE, 0);
@@ -758,6 +761,7 @@ void MoneyTrackerGUI::on_model_changed(GtkWidget* widget, gpointer data) {
 }
 
 void MoneyTrackerGUI::on_chat_send(GtkWidget* widget, gpointer data) {
+    (void)widget;
     // Get self pointer from the widget's data
     GtkWidget* clicked_widget = static_cast<GtkWidget*>(data);
     MoneyTrackerGUI* self = static_cast<MoneyTrackerGUI*>(g_object_get_data(G_OBJECT(clicked_widget), "gui"));
