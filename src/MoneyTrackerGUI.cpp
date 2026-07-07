@@ -631,7 +631,7 @@ void MoneyTrackerGUI::build_chat_tab() {
     // Help text
     GtkWidget* help_label = gtk_label_new(
         "💡 To use AI chat:\n"
-        "   1. Install Ollama: curl -fsSL https://ollama.com/install | sh\n"
+        "   1. Install Ollama: curl -fsSL https://ollama.com/install.sh | sh\n"
         "   2. Run: ollama serve\n"
         "   3. Pull a model: ollama pull llama3");
     gtk_label_set_xalign(GTK_LABEL(help_label), 0.0);
