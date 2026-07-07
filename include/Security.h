@@ -1,5 +1,5 @@
-//Copyright (C) 2026 Matthew Anderson
-//MIT License
+// Copyright (C) 2026 Matthew Anderson
+// MIT License
 
 #pragma once
 
