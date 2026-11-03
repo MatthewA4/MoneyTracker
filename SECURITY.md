@@ -2,7 +2,7 @@
 
 ## Reporting Security Issues
 
-**DO NOT** open a public GitHub issue for security vulnerabilities. Instead, please email security@moneytracker.local (or reach out via private channels) with:
+**DO NOT** open a public GitHub issue for security vulnerabilities. Instead, please email mattanderson65@outlook.com (or reach out via private channels) with:
 - A clear description of the vulnerability
 - Steps to reproduce (if applicable)
 - Potential impact
