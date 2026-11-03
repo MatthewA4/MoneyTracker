@@ -194,22 +194,3 @@ if(NOT TARGET uninstall)
     add_custom_target(uninstall
         COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/uninstall.cmake)
 endif()
-
-# Enable testing
-enable_testing()
-
-# Optional: Add test executable if tests exist (only when not using BUILD_TESTS)
-if(NOT BUILD_TESTS)
-    file(GLOB TEST_SOURCES "tests/*.cpp")
-    if(TEST_SOURCES)
-        add_executable(moneytracker_tests ${TEST_SOURCES} ${SOURCES})
-        target_link_libraries(moneytracker_tests
-            PRIVATE
-            Boost::system
-            Boost::filesystem
-            Boost::program_options
-            ${XLSXWRITER_LIBRARY}
-        )
-        add_test(NAME MoneyTrackerTests COMMAND moneytracker_tests)
-    endif()
-endif()
