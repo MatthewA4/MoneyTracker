@@ -23,7 +23,7 @@ void printHelp(const po::options_description& desc)
     std::cout << "MoneyTracker - Budget Analysis Tool" << std::endl;
     std::cout << "===================================" << std::endl << std::endl;
     std::cout << "A powerful C++ application that imports CSV files from banks" << std::endl;
-    std::cout << "and generates professional budget analysis spreadsheets." << std::endl
+    std::cout << "and generates personal budget analysis spreadsheets." << std::endl
               << std::endl;
     std::cout << desc << std::endl;
 }

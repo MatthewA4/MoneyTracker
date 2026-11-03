@@ -341,7 +341,7 @@ MoneyTracker has been transformed from a basic proof-of-concept into a **product
 4. ✅ **Better defaults** - Spreadsheet generation is now default
 5. ✅ **Comprehensive documentation** - Complete user and developer guides
 6. ✅ **Test framework** - Unit tests prepared for regression prevention
-7. ✅ **Professional CLI** - Better arguments, better output
+7. ✅ **CLI** - Better arguments, better output
 8. ✅ **Extensible architecture** - Easy to add new features
 
 The application is now **ready for real-world use** with real bank data from users worldwide.

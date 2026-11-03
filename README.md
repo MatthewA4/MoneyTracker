@@ -1,6 +1,6 @@
-# MoneyTracker - Professional Bank CSV to Budget Analysis
+# MoneyTracker - Personal Bank CSV to Budget Analysis
 
-A production-ready C++ application for importing bank CSV files and generating comprehensive Excel budget spreadsheets with advanced categorization, financial analytics, and professional reporting.
+A production-ready C++ application for importing bank CSV files and generating comprehensive Excel budget spreadsheets with advanced categorization, financial analytics, and reporting.
 
 ## Features
 
@@ -8,13 +8,13 @@ A production-ready C++ application for importing bank CSV files and generating c
 - ✅ **Smart CSV Parsing**: Auto-detects bank/generic formats, handles multiple date formats
 - ✅ **Intelligent Categorization**: Configurable transaction categorization rules
 - ✅ **Advanced Analysis**: Income/expenses, category breakdown, monthly trends, averages
-- ✅ **Professional Excel Export**: Multi-sheet reports with formatting and analytics
+- ✅ **Excel Export**: Multi-sheet reports with formatting and analytics
 - ✅ **Dual Interface**: Both CLI and GTK3 GUI applications
 - ✅ **Structured Logging**: spdlog-based logging with configurable verbosity
 - ✅ **Unit Testing**: GoogleTest framework with continuous integration
 - ✅ **Code Quality**: clang-format, clang-tidy, AddressSanitizer, UndefinedBehaviorSanitizer
 
-## Professional-Grade Improvements
+## Improvements
 
 <details>
 <summary><b>Click to expand</b></summary>
@@ -40,7 +40,7 @@ A production-ready C++ application for importing bank CSV files and generating c
   - Monthly trends and analysis
   - Account-level analysis
   - Average transaction calculations
-- ✅ **Excel Export**: Generates professional XLSX spreadsheets with:
+- ✅ **Excel Export**: Generates XLSX spreadsheets with:
   - Summary sheet with key metrics
   - Detailed transaction listing
   - Category breakdown
@@ -98,7 +98,7 @@ The GUI provides an intuitive interface for:
 - Selecting CSV files and assigning account names
 - Configuring transaction categories
 - Viewing analysis results in tabbed interface
-- Generating professional Excel spreadsheets
+- Generating Excel spreadsheets
 
 **No command-line knowledge required!** See [GUI_USER_GUIDE.md](GUI_USER_GUIDE.md) for complete walkthrough.
 
@@ -246,7 +246,7 @@ OK Analysis complete!
 - **TransactionData**: Transaction storage and queries
 - **BudgetAnalyzer**: Spending analysis and trend calculation
 - **AlertSystem**: Budget limit tracking and alerts
-- **SpreadsheetGenerator**: Professional Excel file generation
+- **SpreadsheetGenerator**: Excel file generation
 
 ## Development
 

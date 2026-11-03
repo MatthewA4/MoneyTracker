@@ -1,7 +1,7 @@
 # MoneyTracker - Project Summary
 
 ## Overview
-MoneyTracker is a complete C++ budgeting application that successfully transforms bank CSV exports into professional Excel budget reports. The application is production-ready and fully functional.
+MoneyTracker is a complete C++ budgeting application that successfully transforms bank CSV exports into Excel budget reports. The application is production-ready and fully functional.
 
 ## What Was Built
 
@@ -23,13 +23,13 @@ MoneyTracker is a complete C++ budgeting application that successfully transform
    - Computes spending trend percentages
 
 4. **Spreadsheet Generator** (`SpreadsheetGenerator.h/cpp`)
-   - Creates professional XLSX files using libxlsxwriter
+   - Creates XLSX files using libxlsxwriter
    - Generates multiple analytical sheets:
      - **Summary Sheet**: Key financial metrics
      - **Transactions Sheet**: Complete transaction listing with formatting
      - **By Category Sheet**: Category-wise spending breakdown
      - **Monthly Trends Sheet**: Month-by-month analysis
-   - Professional formatting with currency formats and styling
+   - formatting with currency formats and styling
 
 5. **CLI Application** (`main.cpp`)
    - User-friendly command-line interface
@@ -55,9 +55,9 @@ MoneyTracker is a complete C++ budgeting application that successfully transform
 - Categories: Groceries, Gas, Dining, Shopping, Subscriptions, Transfers, Other
 - Extensible category system
 
-✓ **Professional Reports**
+✓ **Reports**
 - Multiple analytical sheets
-- Professional formatting with colors and fonts
+- formatting with colors and fonts
 - Currency formatting for all amounts
 - Sortable/filterable data in Excel
 
@@ -229,7 +229,7 @@ ninja install  # Installs to system bin
 
 ✅ C++ implementation
 ✅ CSV file parsing (Wells Fargo and generic formats)
-✅ Spreadsheet generation with professional formatting
+✅ Spreadsheet generation with formatting
 ✅ Multiple account support
 ✅ Budget analysis and categorization
 ✅ CMake build system with Ninja compiler

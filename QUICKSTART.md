@@ -150,7 +150,7 @@ OK Spreadsheet generated successfully: budget_report.xlsx
 ```
 
 ### Excel Spreadsheet:
-Professional multi-sheet workbook with:
+ Multi-sheet workbook with:
 - **Summary** - Key metrics and totals
 - **Categories** - Breakdown by category
 - **Monthly** - Trends over time  

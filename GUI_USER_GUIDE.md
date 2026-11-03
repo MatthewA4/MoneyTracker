@@ -2,7 +2,7 @@
 
 ## Overview
 
-`moneytracker-gui` is a graphical user interface for MoneyTracker that makes it easy to import bank CSV files and generate professional budget analysis spreadsheets without using the command line.
+`moneytracker-gui` is a graphical user interface for MoneyTracker that makes it easy to import bank CSV files and generate  budget analysis spreadsheets without using the command line.
 
 ## System Requirements
 
@@ -207,7 +207,7 @@ Date,Description,Amount
 
 ## Output: Generated Excel Spreadsheet
 
-The application creates a professional Excel spreadsheet with multiple sheets:
+The application creates a Excel spreadsheet with multiple sheets:
 
 1. **Summary** - Overview metrics and totals
 2. **Categories** - Spending breakdown by category
@@ -215,7 +215,7 @@ The application creates a professional Excel spreadsheet with multiple sheets:
 4. **Transactions** - Complete ledger with all details
 
 All sheets are formatted with:
-- Professional styling
+- styling
 - Currency formatting
 - Clear headers
 - Proper column widths
